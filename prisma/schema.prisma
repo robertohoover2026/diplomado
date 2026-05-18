@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Solicitud {
+  id             Int      @id @default(autoincrement())
+  folio          String   @unique
+  nombre         String
+  apellidos      String
+  curp           String?
+  correo         String
+  telefono       String?
+  perfil         String
+  institucion    String?
+  nivelAcademico String
+  pais           String
+  nacionalidad   String
+  costo          Float    @default(3300)
+  urlCV              String?
+  urlIdentificacion  String?
+  urlCartaMotivos    String?
+  urlVoucher         String?
+  estatus        String   @default("PENDIENTE")
+  notasComite    String?
+  creadoEn       DateTime @default(now())
+  actualizadoEn  DateTime @updatedAt
+  kardex         Kardex?
+  @@map("solicitudes")
+}
+
+model Kardex {
+  id          Int       @id @default(autoincrement())
+  solicitudId Int       @unique
+  solicitud   Solicitud @relation(fields: [solicitudId], references: [id])
+  asistenciaM1 Float?
+  asistenciaM2 Float?
+  asistenciaM3 Float?
+  asistenciaM4 Float?
+  puntajeAsistencia Float?
+  ensayoM1 Float?
+  ensayoM2 Float?
+  ensayoM3 Float?
+  ensayoM4 Float?
+  puntajeEnsayosParciales Float?
+  ensayoFinal        Float?
+  puntajeEnsayoFinal Float?
+  calificacionFinal  Float?
+  aprobado           Boolean @default(false)
+  calificacionMinima Float   @default(8)
+  estatusGeneral     String  @default("EN_CURSO")
+  creadoEn       DateTime @default(now())
+  actualizadoEn  DateTime @updatedAt
+  @@map("kardex")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  correo    String   @unique
+  password  String
+  rol       String   @default("ADMIN")
+  creadoEn  DateTime @default(now())
+  @@map("admins")
+}
+
+model Configuracion {
+  id    Int    @id @default(autoincrement())
+  clave String @unique
+  valor String
+  @@map("configuracion")
+}
+
+model Docente {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  institucion String
+  cargo       String?
+  url         String?
+  activo      Boolean  @default(true)
+  orden       Int      @default(0)
+  esCoordinador Boolean @default(false)
+  creadoEn    DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@map("docentes")
+}

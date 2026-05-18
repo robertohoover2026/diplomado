@@ -1,0 +1,31 @@
+services:
+  diplomado-app:
+    build: .
+    container_name: diplomado-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./public/uploads:/app/public/uploads
+    networks:
+      - web
+
+  diplomado-db:
+    image: postgres:15-alpine
+    container_name: diplomado-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: diplomado_user
+      POSTGRES_PASSWORD: diplomado2026
+      POSTGRES_DB: diplomado_db
+    volumes:
+      - diplomado_data:/var/lib/postgresql/data
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
+
+volumes:
+  diplomado_data:
