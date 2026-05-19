@@ -1,4 +1,5 @@
 import DocentesSection from "../components/DocentesSection"
+import Navbar from "../components/Navbar"
 import Link from "next/link"
 
 export const dynamic = "force-dynamic"
@@ -9,11 +10,14 @@ export default function HomePage() {
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=DM+Sans:wght@300;400;500&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body { overflow-x: hidden; background: #FAF6EF; }
+        
+        /* CORRECCIÓN DE DESBORDAMIENTO: html y body estrictos */
+        html { scroll-behavior: smooth; overflow-x: hidden; width: 100%; max-width: 100vw; }
+        body { overflow-x: hidden; width: 100%; max-width: 100vw; background: #FAF6EF; }
 
         .landing-body { font-family: "DM Sans", sans-serif; color: #1A1210; padding-top: 64px; }
 
+        /* NAV STYLES */
         nav.nav-container {
           display: flex; align-items: center; justify-content: space-between;
           padding: 0 5vw; width: 100%; position: fixed; top: 0; left: 0; right: 0;
@@ -21,14 +25,17 @@ export default function HomePage() {
           backdrop-filter: blur(12px); border-bottom: 1px solid rgba(107,31,42,0.15);
           box-sizing: border-box;
         }
-        .nav-logo { font-family: "Playfair Display", serif; color: #6B1F2A; font-weight: 700; font-size: 1rem; text-decoration: none; }
+        .nav-logo { font-family: "Playfair Display", serif; color: #6B1F2A; font-weight: 700; font-size: 1rem; text-decoration: none; z-index: 1002; }
         .nav-links { display: flex; align-items: center; list-style: none; gap: 2rem; }
         .nav-links a { text-decoration: none; color: #3D2B1F; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; transition: color .2s; }
         .nav-links a:hover { color: #6B1F2A; }
         .nav-cta { background: #6B1F2A !important; color: #fff !important; padding: 0.45rem 1.2rem; border-radius: 4px; }
         .nav-cta:hover { background: #3D2B1F !important; }
+        
+        /* Botón hamburguesa oculto en escritorio */
+        .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #6B1F2A; z-index: 1002; }
 
-        .hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+        .hero { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; padding: 0; }
         .hero-left { display: flex; flex-direction: column; justify-content: center; padding: 8vw 5vw 8vw 8vw; background: #FAF6EF; }
         .hero-eyebrow { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #C8973A; margin-bottom: 1.5rem; }
         .hero-eyebrow::before { content: ""; display: block; width: 32px; height: 1px; background: #C8973A; }
@@ -140,23 +147,30 @@ export default function HomePage() {
           .about-grid, .eval-grid, .modules-grid, .calendar-grid, .contact-grid { grid-template-columns: 1fr; }
           .about-right { grid-template-columns: 1fr 1fr; }
           .proceso-steps, .banco-grid { grid-template-columns: 1fr; }
-          .nav-links { display: none; }
+          
+          /* CORRECCIÓN: Ajuste de correos largos en móvil */
+          .contact-block a { word-break: break-word; }
+          
+          /* CORRECCIÓN: Footer responsivo */
+          footer { flex-direction: column; gap: 1rem; text-align: center; }
+
+          /* LÓGICA VISUAL DEL MENÚ MÓVIL */
+          .mobile-menu-btn { display: block; }
+          .nav-links {
+            position: fixed; top: 0; right: -100%; width: 260px; height: 100vh;
+            background: #FAF6EF; padding-top: 80px; padding-left: 2rem;
+            flex-direction: column; align-items: flex-start;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.05); transition: right 0.3s ease;
+            z-index: 1001;
+          }
+          .nav-links.active { right: 0; }
         }
       `}} />
 
       <div className="landing-body">
-        <nav className="nav-container">
-          <div className="nav-logo">CESMECA · UNICACH</div>
-          <ul className="nav-links">
-            <li><a href="#sobre">Sobre el diplomado</a></li>
-            <li><a href="#modulos">Módulos</a></li>
-            <li><a href="#calendario">Calendario</a></li>
-            <li><a href="#docentes">Docentes</a></li>
-            <li><a href="#proceso">Proceso</a></li>
-            <li><Link href="/mi-solicitud">Mi solicitud</Link></li>
-            <li><Link href="/registro" className="nav-cta">Inscribirse</Link></li>
-          </ul>
-        </nav>
+        
+        {/* Aquí insertamos el componente Navbar que acabas de crear */}
+        <Navbar />
 
         <section className="hero">
           <div className="hero-left">
@@ -166,10 +180,10 @@ export default function HomePage() {
             <div className="hero-meta">
               <div className="meta-pill">📅 Septiembre 2026 – Junio 2027</div>
               <div className="meta-pill">🕐 Viernes 16:00 – 19:00 hrs</div>
-              <div className="meta-pill">📍 Presencial · San Cristóbal de Las Casas, Chiapas</div>
+              <div className="meta-pill">📍 Presencial y a distancia · San Cristóbal de Las Casas, Chiapas</div>
             </div>
             <div className="hero-btns">
-              <Link href="/registro" className="btn-primary">Solicitar inscripción</Link>
+              <Link href="/registro" className="btn-primary">Hacer pre-registro</Link>
               <a href="#modulos" className="btn-ghost">Ver plan académico</a>
             </div>
           </div>
@@ -185,7 +199,7 @@ export default function HomePage() {
                 <div className="stat-item">
                   <div className="stat-num">2</div>
                   <div className="stat-label">Semestres académicos</div>
-                  <div className="stat-sub">Semestre I: Sep 2026 – Ene 2027</div>
+                  <div className="stat-sub">Semestre I: Sep 2026 – Ene 2027<br/>Semestre II: Febrero-junio 2027</div>
                 </div>
                 <div className="stat-item">
                   <div className="stat-num">Coord.</div>
@@ -226,7 +240,7 @@ export default function HomePage() {
           <div className="modules-grid">
             <div className="module-card">
               <div className="module-header"><div><div className="module-num">01</div><div className="module-title">Teoría Política</div></div><span className="module-hrs">30 hrs · Sem. I</span></div>
-              <div className="module-body"><p className="module-desc">Conceptos fundamentales y principales corrientes del pensamiento político, desde sus orígenes hasta los debates contemporáneos.</p><ul className="module-units"><li><span className="unit-dot"></span>Fundamentos del Pensamiento Político</li><li><span className="unit-dot"></span>Corrientes Políticas Modernas</li><li><span className="unit-dot"></span>Debates Contemporáneos</li></ul></div>
+              <div className="module-body"><p className="module-desc">Conceptos fundamentales y principales corrientes del pensamiento político, desde sus origins hasta los debates contemporáneos.</p><ul className="module-units"><li><span className="unit-dot"></span>Fundamentos del Pensamiento Político</li><li><span className="unit-dot"></span>Corrientes Políticas Modernas</li><li><span className="unit-dot"></span>Debates Contemporáneos</li></ul></div>
             </div>
             <div className="module-card">
               <div className="module-header"><div><div className="module-num">02</div><div className="module-title">Sistemas de Gobierno</div></div><span className="module-hrs">30 hrs · Sem. I</span></div>
@@ -247,7 +261,7 @@ export default function HomePage() {
           <div className="section-label">Fechas importantes</div>
           <h2 className="section-title">Calendario académico</h2>
           <div className="calendar-grid">
-            <div className="cal-cell"><div className="cal-period">Convocatoria</div><div className="cal-date">Ago – Sep 2026</div><div className="cal-desc">Registro y proceso de selección de participantes.</div></div>
+            <div className="cal-cell"><div className="cal-period">Convocatoria</div><div className="cal-date">Mayo - Agosto 2026</div><div className="cal-desc">Proceso de selección y registro de participantes.</div></div>
             <div className="cal-cell"><div className="cal-period">Semestre I</div><div className="cal-date">Sep 2026 – Ene 2027</div><div className="cal-desc">Módulos 1 y 2 · Viernes 16–19 hrs</div></div>
             <div className="cal-cell"><div className="cal-period">Semestre II</div><div className="cal-date">Feb – Jun 2027</div><div className="cal-desc">Módulos 3 y 4 · Viernes 16–19 hrs</div></div>
             <div className="cal-cell"><div className="cal-period">Clausura</div><div className="cal-date">Junio 2027</div><div className="cal-desc">Entrega de ensayo final y acto de graduación.</div></div>
@@ -288,9 +302,9 @@ export default function HomePage() {
           <h2 className="section-title">Proceso de registro y matriculación</h2>
           <p className="section-body">El proceso consta de tres etapas. Lee con atención antes de enviar tu solicitud.</p>
           <div className="proceso-steps">
-            <div className="paso"><div className="paso-num">01</div><div className="paso-title">Pre-registro en línea</div><div className="paso-desc">Envía tu Currículum Vitae, copia de identificación oficial y carta de exposición de motivos.</div><div className="paso-fecha">📅 20 de mayo al 10 de julio de 2026</div></div>
-            <div className="paso"><div className="paso-num">02</div><div className="paso-title">Inscripción y pago</div><div className="paso-desc">Una vez aceptado, realiza el pago de inscripción y envía tu comprobante.</div><div className="paso-fecha">📅 4 al 14 de agosto de 2026</div></div>
-            <div className="paso"><div className="paso-num">03</div><div className="paso-title">Registro universitario</div><div className="paso-desc">Confirmado tu pago, recibirás por correo el enlace para completar tu registro oficial en UNICACH.</div><div className="paso-fecha">📅 Agosto 2026</div></div>
+            <div className="paso"><div className="paso-num">01</div><div className="paso-title">Pre-registro en línea</div><div className="paso-desc">Llena el formulario con tus datos y adjunta tu CV, identificación oficial y carta de motivos.</div><div className="paso-fecha">📅 20 de mayo al 10 de julio de 2026</div></div>
+            <div className="paso"><div className="paso-num">02</div><div className="paso-title">Evaluación y pago</div><div className="paso-desc">Si tu solicitud es aceptada, realiza el pago. Da seguimiento en "Mi solicitud" con el código enviado a tu correo.</div><div className="paso-fecha">📅 4 al 14 de agosto de 2026</div></div>
+            <div className="paso"><div className="paso-num">03</div><div className="paso-title">Constancia de conclusión</div><div className="paso-desc">Al concluir y aprobar el diplomado, recibirás por correo el enlace oficial para solicitar tu constancia.</div><div className="paso-fecha">📅 Junio 2027</div></div>
           </div>
           <div className="banco-box">
             <h3>💳 Datos bancarios para pago</h3>
@@ -313,7 +327,7 @@ export default function HomePage() {
           <h2 className="section-title" style={{textAlign:"center"}}>Solicitar inscripción</h2>
           <p className="section-body" style={{margin:"0 auto 2rem"}}>Completa el formulario de pre-registro y el comité revisará tu solicitud en un plazo máximo de 5 días hábiles.</p>
           <div className="insc-btns">
-            <Link href="/registro" className="btn-primary" style={{fontSize:"1rem",padding:"1.1rem 2.5rem"}}>Solicitar inscripción</Link>
+            <Link href="/registro" className="btn-primary" style={{fontSize:"1rem",padding:"1.1rem 2.5rem"}}>Hacer pre-registro</Link>
             <Link href="/mi-solicitud" style={{display:"inline-block",border:"1.5px solid #6B1F2A",color:"#6B1F2A",padding:"1.05rem 2rem",borderRadius:"4px",textDecoration:"none",fontWeight:500,fontSize:"1rem"}}>Consultar mi solicitud</Link>
           </div>
         </section>
@@ -330,7 +344,7 @@ export default function HomePage() {
 
         <footer>
           <span>© 2026 CESMECA · Universidad Autónoma de Ciencias y Artes de Chiapas. <em>2026, Año de Margarita Maza · Año de Jaime Sabines</em></span>
-          <Link href="/registro" style={{color:"#C8973A",textDecoration:"none"}}>Inscribirse →</Link>
+          <Link href="/registro" style={{color:"#C8973A",textDecoration:"none"}}>Pre-registro →</Link>
         </footer>
       </div>
     </>

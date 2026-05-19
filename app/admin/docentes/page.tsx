@@ -78,7 +78,8 @@ export default function DocentesPage() {
 
       <div className="p-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto w-full custom-scrollbar">
+            <table className="w-full text-sm min-w-[800px]">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Orden</th>
@@ -112,6 +113,7 @@ export default function DocentesPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -172,6 +174,14 @@ export default function DocentesPage() {
           </div>
         </div>
       )}
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.3); border-radius: 10px; }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); }
+      `}} />
     </div>
   )
 }
+

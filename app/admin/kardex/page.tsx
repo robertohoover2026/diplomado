@@ -12,10 +12,21 @@ export default function KardexPage() {
 
   useEffect(() => { cargar() }, [])
 
-  async function cargar() {
+  // Se añade un parámetro opcional para forzar la actualización del participante seleccionado
+  async function cargar(idSeleccionadoAActualizar?: string) {
     const res = await fetch("/api/admin?estatus=INSCRITO")
     const data = await res.json()
-    if (data.ok) setSolicitudes(data.solicitudes)
+    if (data.ok) {
+      setSolicitudes(data.solicitudes)
+      
+      // Sincronización: Si acabamos de guardar, actualizamos también los datos de la tarjeta seleccionada
+      if (idSeleccionadoAActualizar) {
+        const solicitudActualizada = data.solicitudes.find((s: any) => s.id === idSeleccionadoAActualizar)
+        if (solicitudActualizada) {
+          setSeleccionada(solicitudActualizada)
+        }
+      }
+    }
   }
 
   function seleccionar(s: any) {
@@ -75,13 +86,15 @@ export default function KardexPage() {
     const data = await res.json()
     if (data.ok) {
       if (accion === "APROBAR") {
-        setGuardado("✅ Aprobado correctamente. Email con constancia enviado al participante.")
+        setGuardado("✅ Aprobado correctamente. Email con constancia enviado.")
       } else if (accion === "NO_APROBAR") {
-        setGuardado("❌ Marcado como no aprobado. Email de notificación enviado al participante.")
+        setGuardado("❌ Marcado como no aprobado. Email enviado.")
       } else {
         setGuardado("✅ Calificaciones guardadas correctamente.")
       }
-      await cargar()
+      
+      // Sincronización: pasamos el ID para que la lista y el panel derecho se sincronicen
+      await cargar(seleccionada.id) 
     }
     setLoading(false)
   }
@@ -89,161 +102,230 @@ export default function KardexPage() {
   const calc = seleccionada ? calcular() : null
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#6B1F2A] text-white px-6 py-4 flex justify-between items-center">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <div className="bg-[#6B1F2A] text-white px-6 py-4 flex justify-between items-center shrink-0 shadow-sm z-10">
         <div>
           <h1 className="font-bold text-lg">Kardex Académico</h1>
           <p className="text-xs text-red-200">Diplomado CESMECA-UNICACH</p>
         </div>
-        <button onClick={() => router.push("/admin")} className="text-sm px-4 py-2 rounded-lg text-white border border-white/30 hover:bg-white/10">
+        <button onClick={() => router.push("/admin")} className="text-sm px-4 py-2 rounded-lg text-white border border-white/30 hover:bg-white/10 transition-colors">
           Volver al admin
         </button>
       </div>
 
-      <div className="p-6 grid grid-cols-3 gap-6">
-        <div className="col-span-1">
-          <h2 className="text-sm font-medium text-gray-600 mb-3 uppercase tracking-wider">Participantes inscritos</h2>
-          <div className="space-y-2">
-            {solicitudes.length === 0 && <p className="text-gray-400 text-sm">No hay participantes inscritos aún</p>}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 p-6 h-[calc(100vh-76px)]">
+        
+        {/* PANEL IZQUIERDO: LISTA (Mejorado UX/UI) */}
+        <div className="col-span-1 flex flex-col bg-gray-50 h-full border-r border-gray-200 pr-4">
+          <h2 className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-widest shrink-0">Participantes inscritos</h2>
+          
+          <div className="space-y-4 overflow-y-auto pr-2 pb-6 custom-scrollbar h-full">
+            {solicitudes.length === 0 && <p className="text-gray-400 text-sm italic">No hay participantes inscritos aún</p>}
+            
             {solicitudes.map((s: any) => (
-              <div key={s.id} onClick={() => seleccionar(s)}
-                className={`bg-white rounded-xl p-4 cursor-pointer border transition-all ${seleccionada?.id === s.id ? "border-[#6B1F2A] shadow-md" : "border-gray-100 hover:border-gray-300"}`}>
-                <p className="font-semibold text-gray-900 text-sm">{s.nombre} {s.apellidos}</p>
-                <p className="text-xs text-gray-500">{s.folio}</p>
-                {s.kardex && (
-                  <div className="mt-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.kardex.estatusGeneral === "APROBADO" ? "bg-green-100 text-green-700" : s.kardex.estatusGeneral === "NO_APROBADO" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
-                      {s.kardex.estatusGeneral || "EN_CURSO"}
-                    </span>
-                    {s.kardex.calificacionFinal && <span className="text-xs text-gray-500 ml-2">Cal: {Number(s.kardex.calificacionFinal).toFixed(1)}</span>}
-                  </div>
-                )}
+              <div 
+                key={s.id} 
+                onClick={() => seleccionar(s)}
+                className={`bg-white rounded-xl p-5 cursor-pointer border shadow-sm transition-all duration-200 hover:-translate-y-1 ${
+                  seleccionada?.id === s.id 
+                    ? "border-[#6B1F2A] ring-1 ring-[#6B1F2A] shadow-md" 
+                    : "border-gray-200 hover:border-gray-300 hover:shadow-md"
+                }`}
+              >
+                <div className="flex flex-col gap-1.5">
+                  <p className="font-bold text-gray-900 text-[15px] leading-tight">{s.nombre} {s.apellidos}</p>
+                  <p className="text-xs text-gray-500 font-mono bg-gray-100 self-start px-2 py-0.5 rounded">{s.folio}</p>
+                  
+                  {s.kardex && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                      <span className={`text-[11px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wide ${
+                        s.kardex.estatusGeneral === "APROBADO" ? "bg-green-100 text-green-800" : 
+                        s.kardex.estatusGeneral === "NO_APROBADO" ? "bg-red-100 text-red-800" : 
+                        "bg-yellow-100 text-yellow-800"
+                      }`}>
+                        {s.kardex.estatusGeneral || "EN CURSO"}
+                      </span>
+                      {s.kardex.calificacionFinal && (
+                        <span className="text-xs font-semibold text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                          Cal: {Number(s.kardex.calificacionFinal).toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="col-span-2">
+        {/* PANEL DERECHO: DETALLE Y FORMULARIO */}
+        <div className="col-span-1 md:col-span-2 overflow-y-auto h-full pb-10 pl-2 custom-scrollbar">
           {!seleccionada && (
-            <div className="bg-white rounded-xl p-12 text-center border border-gray-100">
-              <p className="text-gray-400">Selecciona un participante para ver su kardex</p>
+            <div className="bg-white rounded-xl p-12 text-center border border-gray-200 shadow-sm flex flex-col items-center justify-center h-[50vh]">
+              <div className="text-4xl mb-4">📋</div>
+              <p className="text-gray-500 font-medium">Selecciona un participante de la lista para gestionar su kardex</p>
             </div>
           )}
 
           {seleccionada && (
-            <div className="space-y-4">
-              <div className="bg-white rounded-xl p-6 border border-gray-100">
-                <h2 className="font-bold text-[#6B1F2A] text-lg mb-1">{seleccionada.nombre} {seleccionada.apellidos}</h2>
-                <p className="text-gray-500 text-sm">{seleccionada.folio} · {seleccionada.institucion}</p>
+            <div className="space-y-6 max-w-4xl mx-auto">
+              
+              {/* Cabecera del participante */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-[#6B1F2A] text-xl mb-1">{seleccionada.nombre} {seleccionada.apellidos}</h2>
+                  <p className="text-gray-500 text-sm font-medium">{seleccionada.folio} · {seleccionada.institucion}</p>
+                </div>
+                <div className="text-right text-sm text-gray-400">
+                  <p>{seleccionada.email}</p>
+                </div>
               </div>
 
-              <div className="bg-white rounded-xl p-6 border border-gray-100">
-                <h3 className="font-semibold text-gray-800 mb-4">Asistencia por módulo (calificación 0-10)</h3>
-                <div className="grid grid-cols-4 gap-3">
+              {/* Bloque: Asistencia */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="font-bold text-gray-800 mb-5 border-b pb-2">Asistencia por módulo <span className="font-normal text-gray-400 text-sm ml-2">(Calificación 0-10)</span></h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[1,2,3,4].map(n => (
-                    <div key={n}>
-                      <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Módulo {n}</label>
+                    <div key={n} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Módulo {n}</label>
                       <input type="number" min="0" max="10" step="0.1"
                         value={kardex[`asistenciaM${n}`]}
                         onChange={e => {
                           const v = e.target.value
                           if (v === "" || (Number(v) >= 0 && Number(v) <= 10)) setKardex({...kardex, [`asistenciaM${n}`]: v})
                         }}
-                        className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none ${kardex[`asistenciaM${n}`] !== "" && Number(kardex[`asistenciaM${n}`]) > 10 ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#6B1F2A]"}`}
-                        placeholder="0-10"/>
+                        className={`w-full border rounded-md px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 ${kardex[`asistenciaM${n}`] !== "" && Number(kardex[`asistenciaM${n}`]) > 10 ? "border-red-400 focus:ring-red-200" : "border-gray-300 focus:border-[#6B1F2A] focus:ring-[#6B1F2A]/20"}`}
+                        placeholder="0.0"/>
                     </div>
                   ))}
                 </div>
-                {calc && <p className="text-xs text-gray-500 mt-2">Puntaje asistencia: <strong>{calc.puntajeAsistencia.toFixed(1)}/20</strong> {calc.puntajeAsistencia >= 20 ? "✅" : calc.puntajeAsistencia > 0 ? "⚠️" : ""} · Promedio: {((calc.puntajeAsistencia / 20) * 10).toFixed(1)}/10</p>}
+                {calc && (
+                  <div className="mt-4 bg-gray-50 p-3 rounded-lg flex justify-between items-center text-sm border border-gray-100">
+                    <span className="text-gray-600">Promedio general: <strong className="text-gray-900">{((calc.puntajeAsistencia / 20) * 10).toFixed(1)}</strong>/10</span>
+                    <span className="text-gray-600">Puntaje ponderado: <strong className="text-gray-900">{calc.puntajeAsistencia.toFixed(1)}</strong>/20 {calc.puntajeAsistencia >= 20 ? "✅" : ""}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="bg-white rounded-xl p-6 border border-gray-100">
-                <h3 className="font-semibold text-gray-800 mb-4">Ensayos parciales (calificación 0-10)</h3>
-                <div className="grid grid-cols-4 gap-3">
+              {/* Bloque: Ensayos Parciales */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="font-bold text-gray-800 mb-5 border-b pb-2">Ensayos parciales <span className="font-normal text-gray-400 text-sm ml-2">(Calificación 0-10)</span></h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[1,2,3,4].map(n => (
-                    <div key={n}>
-                      <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Módulo {n}</label>
+                    <div key={n} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Módulo {n}</label>
                       <input type="number" min="0" max="10" step="0.1"
                         value={kardex[`ensayoM${n}`]}
                         onChange={e => {
                           const v = e.target.value
                           if (v === "" || (Number(v) >= 0 && Number(v) <= 10)) setKardex({...kardex, [`ensayoM${n}`]: v})
                         }}
-                        className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none ${kardex[`ensayoM${n}`] !== "" && Number(kardex[`ensayoM${n}`]) > 10 ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#6B1F2A]"}`}
-                        placeholder="0-10"/>
+                        className={`w-full border rounded-md px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 ${kardex[`ensayoM${n}`] !== "" && Number(kardex[`ensayoM${n}`]) > 10 ? "border-red-400 focus:ring-red-200" : "border-gray-300 focus:border-[#6B1F2A] focus:ring-[#6B1F2A]/20"}`}
+                        placeholder="0.0"/>
                     </div>
                   ))}
                 </div>
-                {calc && <p className="text-xs text-gray-500 mt-2">Puntaje ensayos: <strong>{calc.puntajeEnsayos.toFixed(1)}/30</strong> · Promedio: {((calc.puntajeEnsayos / 30) * 10).toFixed(1)}/10</p>}
+                {calc && (
+                  <div className="mt-4 bg-gray-50 p-3 rounded-lg flex justify-between items-center text-sm border border-gray-100">
+                    <span className="text-gray-600">Promedio general: <strong className="text-gray-900">{((calc.puntajeEnsayos / 30) * 10).toFixed(1)}</strong>/10</span>
+                    <span className="text-gray-600">Puntaje ponderado: <strong className="text-gray-900">{calc.puntajeEnsayos.toFixed(1)}</strong>/30</span>
+                  </div>
+                )}
               </div>
 
-              <div className="bg-white rounded-xl p-6 border border-gray-100">
-                <h3 className="font-semibold text-gray-800 mb-4">Ensayo final (calificación 0-10)</h3>
-                <div className="max-w-xs">
-                  <input type="number" min="0" max="10" step="0.1"
-                    value={kardex.ensayoFinal}
-                    onChange={e => {
-                      const v = e.target.value
-                      if (v === "" || (Number(v) >= 0 && Number(v) <= 10)) setKardex({...kardex, ensayoFinal: v})
-                    }}
-                    className={`w-full border rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none ${kardex.ensayoFinal !== "" && Number(kardex.ensayoFinal) > 10 ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#6B1F2A]"}`}
-                    placeholder="0-10"/>
+              {/* Bloque: Ensayo Final */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="font-bold text-gray-800 mb-5 border-b pb-2">Ensayo final <span className="font-normal text-gray-400 text-sm ml-2">(Calificación 0-10)</span></h3>
+                <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <div className="w-1/3">
+                    <input type="number" min="0" max="10" step="0.1"
+                      value={kardex.ensayoFinal}
+                      onChange={e => {
+                        const v = e.target.value
+                        if (v === "" || (Number(v) >= 0 && Number(v) <= 10)) setKardex({...kardex, ensayoFinal: v})
+                      }}
+                      className={`w-full border rounded-md px-4 py-3 text-lg font-bold text-gray-900 text-center focus:outline-none focus:ring-2 ${kardex.ensayoFinal !== "" && Number(kardex.ensayoFinal) > 10 ? "border-red-400 focus:ring-red-200" : "border-gray-300 focus:border-[#6B1F2A] focus:ring-[#6B1F2A]/20"}`}
+                      placeholder="0.0"/>
+                  </div>
+                  {calc && (
+                    <div className="w-2/3">
+                      <p className="text-sm text-gray-600">Puntaje ponderado: <strong className="text-xl text-gray-900">{calc.puntajeFinal.toFixed(1)}</strong><span className="text-gray-500">/50</span></p>
+                    </div>
+                  )}
                 </div>
-                {calc && <p className="text-xs text-gray-500 mt-2">Puntaje ensayo final: <strong>{calc.puntajeFinal.toFixed(1)}/50</strong></p>}
               </div>
 
+              {/* Resultado Final */}
               {calc && (
-                <div className={`rounded-xl p-6 border-2 ${calc.aprobado ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"}`}>
+                <div className={`rounded-xl p-8 border-2 shadow-sm ${calc.aprobado ? "bg-green-50 border-green-300" : "bg-red-50 border-red-200"}`}>
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Calificación final</p>
-                      <p className={`text-4xl font-bold ${calc.aprobado ? "text-green-700" : "text-red-700"}`}>{calc.total.toFixed(1)}<span className="text-lg font-normal text-gray-500">/100</span></p>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Calificación final</p>
+                      <p className={`text-5xl font-black ${calc.aprobado ? "text-green-800" : "text-red-800"}`}>{calc.total.toFixed(1)}<span className="text-2xl font-medium text-opacity-50">/100</span></p>
+                      <p className="text-sm text-gray-600 mt-2 font-medium">
                         Asistencia: {calc.puntajeAsistencia.toFixed(1)} + Ensayos: {calc.puntajeEnsayos.toFixed(1)} + Final: {calc.puntajeFinal.toFixed(1)}
                       </p>
                     </div>
-                    <div className="text-center">
-                      <p className={`text-2xl font-bold ${calc.aprobado ? "text-green-700" : "text-red-700"}`}>
+                    <div className="text-right">
+                      <p className={`text-3xl font-black tracking-tight ${calc.aprobado ? "text-green-700" : "text-red-700"}`}>
                         {calc.aprobado ? "✅ APROBADO" : "❌ NO APROBADO"}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">Mínimo aprobatorio: 60/100</p>
+                      <p className="text-sm font-medium text-gray-500 mt-2">Mínimo aprobatorio: 60/100</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex gap-3">
-                <button onClick={() => guardar()} disabled={loading} className="flex-1 bg-[#6B1F2A] text-white py-3 rounded-xl font-medium text-sm hover:opacity-90 disabled:opacity-50">
+              {/* Acciones */}
+              <div className="flex gap-4 pt-2">
+                <button onClick={() => guardar()} disabled={loading} className="flex-1 bg-[#6B1F2A] text-white py-4 rounded-xl font-bold text-[15px] shadow-sm hover:bg-[#521620] hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                   {loading ? "Guardando..." : "Guardar calificaciones"}
                 </button>
+                
                 {calc && calc.aprobado && seleccionada.kardex?.estatusGeneral !== "APROBADO" && (
-                  <button onClick={() => guardar("APROBAR")} disabled={loading} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium text-sm hover:opacity-90 disabled:opacity-50">
+                  <button onClick={() => guardar("APROBAR")} disabled={loading} className="flex-1 bg-green-600 text-white py-4 rounded-xl font-bold text-[15px] shadow-sm hover:bg-green-700 hover:shadow-md transition-all disabled:opacity-50">
                     Aprobar y enviar constancia
                   </button>
                 )}
+                
                 {calc && calc.aprobado && seleccionada.kardex?.estatusGeneral === "APROBADO" && (
-                  <div className="flex-1 flex flex-col gap-2">
-                    <div className="bg-green-100 text-green-700 py-3 rounded-xl text-sm font-medium text-center">✅ Constancia enviada</div>
-                    <button onClick={() => guardar("APROBAR")} disabled={loading} className="text-xs text-green-600 hover:underline text-center">Reenviar constancia</button>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <div className="bg-green-100 border border-green-200 text-green-800 py-3 rounded-xl text-[15px] font-bold text-center shadow-sm">✅ Constancia oficial enviada</div>
+                    <button onClick={() => guardar("APROBAR")} disabled={loading} className="text-xs font-medium text-green-700 hover:text-green-900 mt-2 text-center underline decoration-green-300">Reenviar constancia</button>
                   </div>
                 )}
+                
                 {calc && !calc.aprobado && calc.total > 0 && seleccionada.kardex?.estatusGeneral !== "NO_APROBADO" && (
-                  <button onClick={() => guardar("NO_APROBAR")} disabled={loading} className="flex-1 bg-red-600 text-white py-3 rounded-xl font-medium text-sm hover:opacity-90 disabled:opacity-50">
+                  <button onClick={() => guardar("NO_APROBAR")} disabled={loading} className="flex-1 bg-red-600 text-white py-4 rounded-xl font-bold text-[15px] shadow-sm hover:bg-red-700 hover:shadow-md transition-all disabled:opacity-50">
                     Marcar como no aprobado
                   </button>
                 )}
+                
                 {calc && !calc.aprobado && seleccionada.kardex?.estatusGeneral === "NO_APROBADO" && (
-                  <div className="flex-1 flex flex-col gap-2">
-                    <div className="bg-red-100 text-red-700 py-3 rounded-xl text-sm font-medium text-center">❌ Notificación enviada</div>
-                    <button onClick={() => guardar("NO_APROBAR")} disabled={loading} className="text-xs text-red-600 hover:underline text-center">Reenviar notificación</button>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <div className="bg-red-100 border border-red-200 text-red-800 py-3 rounded-xl text-[15px] font-bold text-center shadow-sm">❌ Notificación de no aprobación enviada</div>
+                    <button onClick={() => guardar("NO_APROBAR")} disabled={loading} className="text-xs font-medium text-red-700 hover:text-red-900 mt-2 text-center underline decoration-red-300">Reenviar notificación</button>
                   </div>
                 )}
               </div>
-              {guardado && <p className={`text-sm text-center font-medium ${guardado.startsWith("❌") ? "text-red-600" : "text-green-600"}`}>{guardado}</p>}
+              
+              {guardado && (
+                <div className={`p-4 rounded-lg text-center font-bold text-[15px] ${guardado.startsWith("❌") ? "bg-red-50 text-red-700 border border-red-200" : "bg-green-50 text-green-700 border border-green-200"}`}>
+                  {guardado}
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+      
+      {/* Estilos para ocultar la barra de scroll y que se vea más limpio */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.3); border-radius: 10px; }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); }
+      `}} />
     </div>
   )
 }

@@ -11,23 +11,19 @@ export default function DocentesSection() {
   }, [])
 
   return (
-    <section className="docentes" id="docentes" style={{background: "#fff", padding: "7rem 8vw"}}>
-      <div className="reveal">
-        <div className="section-label" style={{fontSize: "0.75rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "#C8973A", fontWeight: 500, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.6rem"}}>
-          <span style={{display: "block", width: "24px", height: "1px", background: "#C8973A"}}></span>
-          Quiénes enseñan
-        </div>
-        <h2 style={{fontFamily: "Playfair Display, serif", fontSize: "clamp(2rem, 3.5vw, 3rem)", fontWeight: 900, color: "#6B1F2A", lineHeight: 1.15, marginBottom: "1.5rem"}}>Equipo docente</h2>
-        <p style={{fontSize: "1rem", color: "#7A6558", maxWidth: "680px", lineHeight: 1.8, marginBottom: "3rem"}}>Investigadores y académicos de instituciones nacionales de alto nivel, especializados en ciencia política, derecho, sociología y administración pública.</p>
-      </div>
-      <div style={{display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem"}}>
+    // Se elimina el estilo en línea conflictivo y se confía en las clases del layout global
+    <div className="w-full">
+      
+      {/* CUADRÍCULA RESPONSIVA DE TAILWIND */}
+      {/* Móvil: 1 columna | Tablet: 2 columnas | PC: 4 columnas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {docentes.map((d: any) => (
           <div key={d.id} style={{
             border: d.es_coordinador ? "2px solid #C8973A" : "1px solid rgba(107,31,42,0.15)",
             borderRadius: "8px", padding: "1.8rem 1.5rem",
             background: d.es_coordinador ? "#fff" : "#FAF6EF",
             transition: "transform .2s, box-shadow .2s"
-          }}>
+          }} className="hover:-translate-y-1 hover:shadow-lg">
             <div style={{
               width: "48px", height: "48px", borderRadius: "50%",
               background: d.es_coordinador ? "#C8973A" : "#6B1F2A",
@@ -42,17 +38,16 @@ export default function DocentesSection() {
                 Coordinador académico
               </span>
             )}
-            <div style={{fontFamily: "Playfair Display, serif", fontSize: "1rem", fontWeight: 700, color: "#6B1F2A", marginBottom: "0.3rem", lineHeight: 1.3}}>{d.nombre}</div>
+            <div style={{fontFamily: "Playfair Display, serif", fontSize: "1.1rem", fontWeight: 700, color: "#6B1F2A", marginBottom: "0.3rem", lineHeight: 1.3}}>{d.nombre}</div>
             <div style={{fontSize: "0.75rem", color: "#C8973A", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.8rem"}}>{d.institucion}</div>
-            {d.url && <a href={d.url} target="_blank" style={{fontSize: "0.8rem", color: "#7A6558", textDecoration: "none"}}>↗ Ver perfil académico</a>}
+            {d.url && (
+              <a href={d.url} target="_blank" rel="noopener noreferrer" style={{fontSize: "0.8rem", color: "#7A6558", textDecoration: "none"}} className="hover:text-[#C8973A] transition-colors">
+                ↗ Ver perfil académico
+              </a>
+            )}
           </div>
         ))}
       </div>
-      <style>{`
-        @media (max-width: 900px) {
-          #docentes > div:last-child { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-    </section>
+    </div>
   )
 }

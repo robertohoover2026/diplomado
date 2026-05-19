@@ -1,11 +1,27 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function RegistroPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [fueraDeRango, setFueraDeRango] = useState(false)
+
+  // VARIABLE DE PRUEBAS: Cambia esto a 'false' cuando vayas a lanzar a producción
+  const MODO_PRUEBAS = true;
+
+  useEffect(() => {
+    // Verificamos la fecha al cargar la página
+    const hoy = new Date()
+    const inicio = new Date('2026-05-20T00:00:00')
+    const fin = new Date('2026-07-10T23:59:59')
+    
+    if (!MODO_PRUEBAS && (hoy < inicio || hoy > fin)) {
+      setFueraDeRango(true)
+    }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -33,18 +49,45 @@ export default function RegistroPage() {
     }
   }
 
+  // SI LA FECHA ESTÁ FUERA DE RANGO, MOSTRAMOS EL MENSAJE
+  if (fueraDeRango) {
+    return (
+      <div className="min-h-screen bg-[#FAF6EF] py-24 px-4 flex flex-col items-center justify-center">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-10 max-w-lg text-center">
+          <div className="text-4xl mb-4">📅</div>
+          <h2 className="text-2xl font-bold text-[#6B1F2A] mb-4">Convocatoria Cerrada</h2>
+          <p className="text-gray-600 mb-6">
+            La convocatoria para el pre-registro de participantes estará abierta del <strong>20 de mayo al 10 de julio de 2026</strong>.
+          </p>
+          <p className="text-sm text-gray-500 mb-8">
+            Te invitamos a regresar en las fechas indicadas para enviar tu solicitud.
+          </p>
+          <Link href="/" className="inline-block bg-[#6B1F2A] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#3D2B1F] transition-colors">
+            Volver al inicio
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF6EF] py-16 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-10">
           <p className="text-[#C8973A] text-sm font-medium tracking-widest uppercase mb-2">CESMECA · UNICACH · 2026</p>
-          <h1 className="text-4xl font-bold text-[#6B1F2A] mb-3">Solicitud de Inscripcion</h1>
+          <h1 className="text-4xl font-bold text-[#6B1F2A] mb-3">Solicitud de Pre-registro</h1>
           <p className="text-gray-500">Diplomado en Estudio y Formacion Politica</p>
           <div className="mt-4 bg-[#6B1F2A] text-white rounded-lg p-4 text-sm">
             <p>Costo de inscripcion: <strong>$3,300 MXN</strong></p>
             <p className="text-gray-300 text-xs mt-1">Los datos bancarios se enviaran una vez aceptada tu solicitud</p>
           </div>
         </div>
+
+        {MODO_PRUEBAS && (
+          <div className="mb-6 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded relative text-center text-sm font-bold">
+            ⚠️ ESTÁS EN MODO DE PRUEBAS. EL CANDADO DE FECHAS ESTÁ DESACTIVADO.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-6">
 
@@ -138,7 +181,7 @@ export default function RegistroPage() {
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
           <button type="submit" disabled={loading} className="w-full bg-[#6B1F2A] text-white py-4 rounded-lg font-medium text-sm hover:bg-[#3D2B1F] transition-colors disabled:opacity-50">
-            {loading ? "Enviando solicitud..." : "Enviar solicitud de pre-registro"}
+            {loading ? "Enviando pre-registro..." : "Enviar solicitud de pre-registro"}
           </button>
 
           <p className="text-xs text-gray-400 text-center">
