@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+      - .env.secrets
     volumes:
       - ./public/uploads:/app/public/uploads
     networks:
@@ -14,10 +15,12 @@ services:
     image: postgres:15-alpine
     container_name: diplomado-db
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: diplomado_user
-      POSTGRES_PASSWORD: diplomado2026
-      POSTGRES_DB: diplomado_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - diplomado_data:/var/lib/postgresql/data
     networks:
